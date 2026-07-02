@@ -6,6 +6,15 @@ import { authService } from '../services/authService';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { dashboardService } from '../services/dashboardService';
 
+const getRatingCategory = (rating) => {
+  if (!rating) return null;
+  const score = Number(rating);
+  if (score >= 4.5) return { label: 'Excellent', color: 'bg-green-500', bg: 'bg-green-50', text: 'text-green-800' };
+  if (score >= 3.5) return { label: 'Good', color: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-800' };
+  if (score >= 2.5) return { label: 'Average', color: 'bg-yellow-500', bg: 'bg-yellow-50', text: 'text-yellow-800' };
+  return { label: 'Needs Improvement', color: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-800' };
+};
+
 const DashboardPage = () => {
   const user = authService.getUser();
   const navigate = useNavigate();
@@ -17,6 +26,16 @@ const DashboardPage = () => {
   });
 
   const summaryCards = data?.cards ? Object.entries(data.cards).map(([key, value]) => ({ key, value })) : [];
+  
+  // Get average rating for employee
+  const getEmployeeAverageRating = () => {
+    if (user?.role !== 'employee' || !data?.cards) return null;
+    const avgRating = data.cards.average_rating;
+    return avgRating;
+  };
+  
+  const averageRating = getEmployeeAverageRating();
+  const ratingCategory = getRatingCategory(averageRating);
 
   return (
     <DashboardLayout>
@@ -33,8 +52,71 @@ const DashboardPage = () => {
         {isLoading && <div className="page-panel py-12 text-center text-slate-500">Preparing your dashboard...</div>}
         {isError && <div className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-700">Dashboard data could not be loaded. <button className="font-semibold underline" onClick={() => refetch()}>Try again</button></div>}
 
+        {user?.role === 'employee' && averageRating !== null && (
+          <div className="page-panel">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">Your Performance Rating</h2>
+                <p className="text-sm text-slate-500 mt-1">See where you stand based on received feedback</p>
+              </div>
+              {ratingCategory && (
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${ratingCategory.bg} ${ratingCategory.text}`}>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <span 
+                        key={star} 
+                        className={`text-xl ${Number(averageRating) >= star ? 'text-yellow-400' : 'text-slate-300'}`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-2xl font-bold">{Number(averageRating).toFixed(1)}</div>
+                  <div className="h-6 w-px bg-slate-300 mx-1" />
+                  <span className="font-semibold text-sm uppercase tracking-wide">{ratingCategory.label}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Rating Scale Indicator */}
+            <div className="mt-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Rating Scale</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-lg">
+                  <div className="w-3 h-3 bg-red-500 rounded-full" />
+                  <div className="text-xs">
+                    <p className="font-semibold text-slate-700">Needs Improvement</p>
+                    <p className="text-slate-500">&lt; 2.5</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 bg-yellow-50 px-3 py-2 rounded-lg">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                  <div className="text-xs">
+                    <p className="font-semibold text-slate-700">Average</p>
+                    <p className="text-slate-500">2.5 - 3.4</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                  <div className="text-xs">
+                    <p className="font-semibold text-slate-700">Good</p>
+                    <p className="text-slate-500">3.5 - 4.4</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
+                  <div className="w-3 h-3 bg-green-500 rounded-full" />
+                  <div className="text-xs">
+                    <p className="font-semibold text-slate-700">Excellent</p>
+                    <p className="text-slate-500">≥ 4.5</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {data?.cards && (
-          <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Dashboard summary">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Dashboard summary">
             {summaryCards.slice(0, 4).map(({ key, value }) => (
               <div className="metric-card bg-white" key={key}>
                 <span>{key.replace(/_/g, ' ')}</span>
@@ -236,15 +318,23 @@ const DashboardPage = () => {
             <div className="card">
               <h2 className="text-xl font-semibold mb-4">Latest Feedback</h2>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {(data.latestFeedback || []).slice(0, 5).map((item) => (
-
-                  <div key={item.id} className="border rounded-lg p-3">
-                    <div className="mb-1 text-sm text-gray-500">
-                      {item.is_anonymous ? <span className="anonymous-badge">Anonymous user</span> : <span>{item.given_by_name}</span>}
+                  <div key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      <span>👤</span>
+                      <span>Anonymous User</span>
                     </div>
-                    <div className="font-medium">Rating: {item.overall_rating}</div>
-                    <div className="text-gray-600 text-sm">{item.comment}</div>
+                    <p className="mt-3 text-slate-600 text-sm leading-7">
+                      {item.comment ? item.comment : 'No comment provided.'}
+                    </p>
+                    <div className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-500">
+                      {new Date(item.created_at).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>

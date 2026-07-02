@@ -2,25 +2,28 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authService } from '../services/authService';
+import { useToasts } from '../components/ToastProvider';
 
 const ForgotPasswordPage = ({ theme, setTheme }) => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [resetLink, setResetLink] = useState('');
+  const { pushToast } = useToasts();
 
   const onSubmit = async (data) => {
     setLoading(true);
-    setMessage('');
-    setResetLink('');
     try {
       const response = await authService.forgotPassword(data.email);
-      setMessage(response.message || 'Reset link generated');
-      if (response.resetLink) {
-        setResetLink(response.resetLink);
-      }
+      pushToast({
+        type: 'success',
+        title: 'Reset email sent',
+        message: response.message || 'If an account exists, you will receive instructions shortly.'
+      });
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Unable to generate reset link');
+      pushToast({
+        type: 'error',
+        title: 'Reset request failed',
+        message: error.response?.data?.error || 'Unable to process the reset request.'
+      });
     } finally {
       setLoading(false);
     }
@@ -37,10 +40,9 @@ const ForgotPasswordPage = ({ theme, setTheme }) => {
       </button>
       <div className="bg-white rounded-lg shadow-2xl p-5 sm:p-8 w-full max-w-md">
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-800">Forgot Password</h1>
-        <p className="text-center text-gray-600 mb-6">Enter your email to generate a reset link</p>
-
-        {message && <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">{message}</div>}
-        {resetLink && <div className="mb-4 text-sm break-all bg-gray-100 p-3 rounded">{resetLink}</div>}
+        <p className="text-center text-gray-600 mb-6">
+          Enter your email and we will send a secure reset link if the account exists.
+        </p>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-4">
@@ -48,7 +50,7 @@ const ForgotPasswordPage = ({ theme, setTheme }) => {
             <input type="email" {...register('email', { required: 'Email is required' })} className="input-field" placeholder="Enter your email" />
             {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
           </div>
-          <button type="submit" disabled={loading} className="w-full btn-primary font-semibold">{loading ? 'Generating...' : 'Generate Reset Link'}</button>
+          <button type="submit" disabled={loading} className="w-full btn-primary font-semibold">{loading ? 'Sending...' : 'Send reset email'}</button>
         </form>
 
         <div className="text-center mt-4">

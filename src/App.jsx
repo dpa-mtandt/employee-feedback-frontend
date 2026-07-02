@@ -54,7 +54,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/login" element={<LoginPage theme={theme} setTheme={setTheme} />} />

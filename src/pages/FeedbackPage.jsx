@@ -100,6 +100,7 @@ const FeedbackPage = () => {
   const selectedCompanyId = watch('company_id');
   const selectedDepartmentId = watch('department_id');
   const selectedEmployeeId = watch('given_to');
+  const commentText = watch('comment') || '';
 
   const { data: companies = [] } = useQuery({
     queryKey: ['feedback-companies'],
@@ -142,6 +143,11 @@ const FeedbackPage = () => {
       return matchesCompany && matchesDepartment;
     })
   ), [activeEmployees, selectedCompanyId, selectedDepartmentId]);
+
+  const selectedEmployee = useMemo(() => (
+    visibleEmployees.find((employee) => toId(employee.id) === toId(selectedEmployeeId))
+    || employees.find((employee) => toId(employee.id) === toId(selectedEmployeeId))
+  ), [visibleEmployees, employees, selectedEmployeeId]);
 
   const companyOptions = useMemo(() => (
     companies.map((company) => ({
@@ -235,89 +241,199 @@ const FeedbackPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="page-panel max-w-4xl mx-auto space-y-6">
-        <div>
-          <h1 className="page-title">Submit Feedback</h1>
-          <p className="page-subtitle">Choose a recipient and rate five core dimensions.</p>
+      <div className="page-panel mx-auto grid max-w-7xl gap-6">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Submit Feedback</p>
+              <h1 className="mt-2 text-3xl font-bold text-slate-950">Enterprise feedback made simple</h1>
+              <p className="mt-2 max-w-2xl text-sm text-slate-600">Select the employee, rate key performance dimensions, and submit confidential feedback.</p>
+            </div>
+            <div className="rounded-3xl bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm">
+              <p className="font-semibold text-slate-900">Ready to submit</p>
+              <p className="mt-1">Modern, secure, and compliant feedback.</p>
+            </div>
+          </div>
         </div>
 
-        {message && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">{message}</div>}
-        {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{errorMessage}</div>}
+        {message && <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 shadow-sm">{message}</div>}
+        {errorMessage && <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-900 shadow-sm">{errorMessage}</div>}
 
-        <form className="grid grid-cols-1 sm:grid-cols-2 gap-4" onSubmit={handleSubmit(onSubmit)}>
+        <form className="grid gap-6 lg:grid-cols-[1.1fr_1.9fr]" onSubmit={handleSubmit(onSubmit)}>
+          <div className="space-y-6 rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Step 1</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950">Employee Selection</h2>
+              <p className="mt-2 text-sm text-slate-600">Choose the employee you want to provide feedback for.</p>
+            </div>
 
-          <input type="hidden" {...register('company_id', { required: 'Company is required' })} />
-          <input type="hidden" {...register('department_id', { required: 'Department is required' })} />
-          <input type="hidden" {...register('given_to', { required: 'Recipient is required' })} />
+            <input type="hidden" {...register('company_id', { required: 'Company is required' })} />
+            <input type="hidden" {...register('department_id', { required: 'Department is required' })} />
+            <input type="hidden" {...register('given_to', { required: 'Employee selection is required' })} />
 
-          <SearchableSelect
-            id="feedback-company"
-            label="Company"
-            value={selectedCompanyId}
-            options={companyOptions}
-            placeholder="Select company"
-            searchPlaceholder="No companies match your search."
-            emptyMessage="No companies available."
-            error={errors.company_id}
-            onChange={handleCompanyChange}
-          />
+            <div className="space-y-4">
+              <SearchableSelect
+                id="feedback-employee"
+                label="Employee Search"
+                value={selectedEmployeeId}
+                options={employeeOptions}
+                placeholder="Search by name or email"
+                searchPlaceholder="No employees match your search."
+                emptyMessage="No active recipients available."
+                error={errors.given_to}
+                onChange={handleEmployeeChange}
+              />
+              <SearchableSelect
+                id="feedback-department"
+                label="Department"
+                value={selectedDepartmentId}
+                options={departmentOptions}
+                placeholder="Select department"
+                searchPlaceholder="No departments match your search."
+                emptyMessage="No departments available."
+                error={errors.department_id}
+                onChange={handleDepartmentChange}
+              />
+              <SearchableSelect
+                id="feedback-company"
+                label="Company"
+                value={selectedCompanyId}
+                options={companyOptions}
+                placeholder="Select company"
+                searchPlaceholder="No companies match your search."
+                emptyMessage="No companies available."
+                error={errors.company_id}
+                onChange={handleCompanyChange}
+              />
+            </div>
 
-          <SearchableSelect
-            id="feedback-department"
-            label="Department"
-            value={selectedDepartmentId}
-            options={departmentOptions}
-            placeholder="Select department"
-            searchPlaceholder="No departments match your search."
-            emptyMessage="No departments available."
-            error={errors.department_id}
-            onChange={handleDepartmentChange}
-          />
-          <div className="md:col-span-2">
-            <SearchableSelect
-              id="feedback-employee"
-              label="Employee"
-              value={selectedEmployeeId}
-              options={employeeOptions}
-              placeholder="Select employee"
-              searchPlaceholder="No employees match your search."
-              emptyMessage="No active recipients available."
-              error={errors.given_to}
-              onChange={handleEmployeeChange}
-            />
-            {visibleEmployees.length === 0 && (
-              <p className="mt-2 text-sm text-slate-500">No active recipients found for this selection.</p>
-            )}
-          </div>
-
-          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {['communication', 'teamwork', 'respect', 'responsibility', 'leadership'].map((field) => (
-              <div key={field}>
-                <label className="block text-gray-700 font-semibold mb-2 capitalize">{field}</label>
-                <select className="input-field" {...register(field, { required: true })}>
-                  <option value="">Select</option>
-                  {[1, 2, 3, 4, 5].map((score) => (
-                    <option key={score} value={score}>{score}</option>
-                  ))}
-                </select>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-xl font-bold text-white">
+                  {selectedEmployee ? selectedEmployee.name.split(' ').map((part) => part[0]).slice(0, 2).join('') : '👤'}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900">Selected employee</p>
+                  <p className="mt-1 text-base font-semibold text-slate-950">{selectedEmployee ? selectedEmployee.name : 'No employee selected'}</p>
+                  <p className="mt-1 text-sm text-slate-500">{selectedEmployee ? `${selectedEmployee.department_name} • ${selectedEmployee.company_name}` : 'Use search to choose a recipient'}</p>
+                </div>
+                {selectedEmployee && (
+                  <button
+                    type="button"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+                    onClick={() => handleEmployeeChange('')}
+                    aria-label="Remove selected employee"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
-            ))}
+            </div>
+
+            <div className="rounded-3xl border border-cyan-200 bg-cyan-50 p-5 text-sm text-slate-700 shadow-sm">
+              <p className="font-semibold text-slate-900">Note</p>
+              <ul className="mt-3 space-y-2 list-disc pl-5">
+                <li>Your feedback is confidential.</li>
+                <li>Provide honest and constructive feedback.</li>
+                <li>Focus on behaviour and professionalism.</li>
+                <li>Feedback helps employees improve.</li>
+              </ul>
+            </div>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-gray-700 font-semibold mb-2">Comment</label>
-            <textarea className="input-field min-h-[120px]" {...register('comment')} />
-          </div>
+          <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Step 2</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950">Give Feedback</h2>
+              <p className="mt-2 text-sm text-slate-600">Rate the employee across five dimensions and provide comments.</p>
+            </div>
 
-          <div className="md:col-span-2 flex items-center gap-3">
-            <label className="flex items-center gap-3 cursor-pointer select-none">
-              <input type="checkbox" {...register('is_anonymous')} className="h-4 w-4" />
-              <span className="text-gray-700 font-semibold">Submit anonymously</span>
-            </label>
-          </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Rating Guide</p>
+              <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+                {[
+                  { value: 1, label: 'Below Average', bgColor: 'bg-red-50', textColor: 'text-red-700', borderColor: 'border-red-200' },
+                  { value: 2, label: 'Average', bgColor: 'bg-orange-50', textColor: 'text-orange-700', borderColor: 'border-orange-200' },
+                  { value: 3, label: 'Satisfactory', bgColor: 'bg-amber-50', textColor: 'text-amber-700', borderColor: 'border-amber-200' },
+                  { value: 4, label: 'Good', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', borderColor: 'border-emerald-200' },
+                  { value: 5, label: 'Excellent', bgColor: 'bg-emerald-100', textColor: 'text-emerald-800', borderColor: 'border-emerald-300' }
+                ].map((item) => (
+                  <div key={item.value} className={`rounded-xl border p-4 text-center transition-all duration-200 hover:shadow-md ${item.bgColor} ${item.borderColor} ${item.textColor}`}>
+                    <div className="text-2xl font-bold">{item.value}</div>
+                    <div className="mt-2 text-xs font-semibold uppercase tracking-wider">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <div className="md:col-span-2 flex gap-4">
-            <button type="submit" className="btn-primary w-full sm:w-auto" disabled={submitMutation.isPending}>Submit Feedback</button>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {['communication', 'teamwork', 'respect', 'responsibility', 'leadership'].map((field) => {
+                const value = watch(field);
+                return (
+                  <div key={field} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                    <div className="mb-4 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-slate-800 capitalize">{field}</span>
+                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Rate</span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {[1, 2, 3, 4, 5].map((score) => {
+                        const selected = String(value) === String(score);
+                        const colors = [
+                          { selected: 'bg-red-500 border-red-500 text-white shadow-red-200', hover: 'border-red-400 bg-red-50 text-red-600' },
+                          { selected: 'bg-orange-500 border-orange-500 text-white shadow-orange-200', hover: 'border-orange-400 bg-orange-50 text-orange-600' },
+                          { selected: 'bg-amber-500 border-amber-500 text-white shadow-amber-200', hover: 'border-amber-400 bg-amber-50 text-amber-600' },
+                          { selected: 'bg-emerald-500 border-emerald-500 text-white shadow-emerald-200', hover: 'border-emerald-400 bg-emerald-50 text-emerald-600' },
+                          { selected: 'bg-emerald-600 border-emerald-600 text-white shadow-emerald-300', hover: 'border-emerald-500 bg-emerald-100 text-emerald-700' }
+                        ];
+                        const color = colors[score - 1];
+                        return (
+                          <button
+                            key={score}
+                            type="button"
+                            className={`rounded-xl border min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-bold transition-all duration-250 ${selected ? `${color.selected} shadow-lg scale-105` : `border-slate-300 bg-white text-slate-700 hover:${color.hover} hover:shadow-md hover:-translate-y-0.5`}`}
+                            onClick={() => setFormValue(field, score)}
+                          >
+                            {score}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {errors[field] && <p className="mt-3 text-sm text-red-500 font-medium">This rating is required.</p>}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="comment" className="block text-sm font-semibold text-slate-700">Comment</label>
+                <textarea
+                  id="comment"
+                  maxLength={500}
+                  rows={5}
+                  className="input-field mt-3 min-h-[160px]"
+                  placeholder="Share constructive feedback about the employee..."
+                  {...register('comment')}
+                />
+                <div className="mt-2 flex justify-between text-sm text-slate-500">
+                  <span className="italic">Optional</span>
+                  <span>{commentText.length}/500</span>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <label className="flex items-center gap-3 text-slate-700">
+                  <input type="checkbox" {...register('is_anonymous')} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm font-semibold">Submit anonymously</span>
+                </label>
+                <p className="mt-2 text-sm text-slate-500">Your identity will not be shown to the employee.</p>
+              </div>
+
+              <button type="submit" className="btn-primary w-full justify-center text-base" disabled={submitMutation.isPending}>
+                <span>✈️</span>
+                Submit Feedback
+              </button>
+            </div>
           </div>
         </form>
       </div>
