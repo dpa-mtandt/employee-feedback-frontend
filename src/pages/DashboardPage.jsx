@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { useState, useEffect } from 'react';
 
 import { authService } from '../services/authService';
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -15,9 +16,58 @@ const getRatingCategory = (rating) => {
   return { label: 'Needs Improvement', color: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-800' };
 };
 
+const useWindowSize = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowSize;
+};
+
 const DashboardPage = () => {
   const user = authService.getUser();
   const navigate = useNavigate();
+  const { width } = useWindowSize();
+  
+  const getXAxisProps = () => {
+    if (width < 640) { // Mobile
+      return {
+        angle: 45,
+        textAnchor: 'start',
+        height: 80,
+        tick: { fontSize: 12 },
+        interval: 0,
+      };
+    } else if (width < 1024) { // Tablet
+      return {
+        angle: 30,
+        textAnchor: 'start',
+        height: 60,
+        tick: { fontSize: 13 },
+        interval: 0,
+      };
+    } else { // Desktop
+      return {
+        tick: { fontSize: 14 },
+        interval: 0,
+      };
+    }
+  };
+  
+  const xAxisProps = getXAxisProps();
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['dashboard', user?.role],
@@ -80,34 +130,34 @@ const DashboardPage = () => {
             
             {/* Rating Scale Indicator */}
             <div className="mt-5">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Rating Scale</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 dark:text-slate-400">Rating Scale</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/30">
                   <div className="w-3 h-3 bg-red-500 rounded-full" />
                   <div className="text-xs">
-                    <p className="font-semibold text-slate-700">Needs Improvement</p>
-                    <p className="text-slate-500">&lt; 2.5</p>
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">Needs Improvement</p>
+                    <p className="text-slate-500 dark:text-slate-400">&lt; 2.5</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 bg-yellow-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center gap-2 bg-yellow-50 px-3 py-2 rounded-lg dark:bg-yellow-900/30">
                   <div className="w-3 h-3 bg-yellow-500 rounded-full" />
                   <div className="text-xs">
-                    <p className="font-semibold text-slate-700">Average</p>
-                    <p className="text-slate-500">2.5 - 3.4</p>
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">Average</p>
+                    <p className="text-slate-500 dark:text-slate-400">2.5 - 3.4</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg dark:bg-blue-900/30">
                   <div className="w-3 h-3 bg-blue-500 rounded-full" />
                   <div className="text-xs">
-                    <p className="font-semibold text-slate-700">Good</p>
-                    <p className="text-slate-500">3.5 - 4.4</p>
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">Good</p>
+                    <p className="text-slate-500 dark:text-slate-400">3.5 - 4.4</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg dark:bg-green-900/30">
                   <div className="w-3 h-3 bg-green-500 rounded-full" />
                   <div className="text-xs">
-                    <p className="font-semibold text-slate-700">Excellent</p>
-                    <p className="text-slate-500">≥ 4.5</p>
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">Excellent</p>
+                    <p className="text-slate-500 dark:text-slate-400">≥ 4.5</p>
                   </div>
                 </div>
               </div>
@@ -166,7 +216,7 @@ const DashboardPage = () => {
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={data.trend}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
+                  <XAxis dataKey="month" {...xAxisProps} />
                   <YAxis />
                   <Tooltip />
                   <Line type="monotone" dataKey={user?.role === 'employee' ? 'average_rating' : 'feedback_count'} stroke="#2563eb" strokeWidth={3} />
@@ -180,7 +230,7 @@ const DashboardPage = () => {
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={Object.entries(data.category).map(([name, value]) => ({ name, value: Number(value || 0) }))}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
+                    <XAxis dataKey="name" {...xAxisProps} />
                     <YAxis />
                     <Tooltip />
                     <Bar dataKey="value" fill="#10b981" />
@@ -198,7 +248,7 @@ const DashboardPage = () => {
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={data?.monthlyFeedback || []}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
+                  <XAxis dataKey="month" {...xAxisProps} />
                   <YAxis />
                   <Tooltip />
                   <Line type="monotone" dataKey="feedback_count" stroke="#2563eb" strokeWidth={3} />
@@ -299,7 +349,7 @@ const DashboardPage = () => {
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={data?.topCompaniesByAverageScore || []}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="company_name" />
+                  <XAxis dataKey="company_name" {...xAxisProps} />
                   <YAxis domain={[0, 5]} />
                   <Tooltip />
                   <Bar dataKey="average_score" fill="#6366f1" />
@@ -319,16 +369,16 @@ const DashboardPage = () => {
               <h2 className="text-xl font-semibold mb-4">Latest Feedback</h2>
 
               <div className="space-y-4">
-                {(data.latestFeedback || []).slice(0, 5).map((item) => (
-                  <div key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                {(data.latestFeedback || []).filter(item => item.comment && item.comment.trim().length > 0).slice(0, 5).map((item) => (
+                  <div key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                       <span>👤</span>
                       <span>Anonymous User</span>
                     </div>
-                    <p className="mt-3 text-slate-600 text-sm leading-7">
-                      {item.comment ? item.comment : 'No comment provided.'}
+                    <p className="mt-3 text-slate-600 text-sm leading-7 dark:text-slate-300">
+                      {item.comment}
                     </p>
-                    <div className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-500">
+                    <div className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                       {new Date(item.created_at).toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: 'long',

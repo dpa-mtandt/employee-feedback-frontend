@@ -28,7 +28,7 @@ const SearchableSelect = ({ id, label, value, options, placeholder, searchPlaceh
 
   return (
     <div className="relative">
-      <label htmlFor={id} className="block text-gray-700 font-semibold mb-2">{label}</label>
+      <label htmlFor={id} className="block text-slate-700 font-semibold mb-2 dark:text-slate-200">{label}</label>
       <div className="relative">
         <input
           id={id}
@@ -52,7 +52,7 @@ const SearchableSelect = ({ id, label, value, options, placeholder, searchPlaceh
         {value && (
           <button
             type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
               onChange('');
@@ -64,13 +64,13 @@ const SearchableSelect = ({ id, label, value, options, placeholder, searchPlaceh
         )}
       </div>
       {isOpen && (
-        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg">
+        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
           {visibleOptions.length > 0 ? (
             visibleOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
-                className={`block w-full px-3 py-2 text-left text-sm hover:bg-blue-50 ${toId(option.value) === toId(value) ? 'bg-blue-50 font-semibold text-blue-700' : 'text-slate-700'}`}
+                className={`block w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 ${toId(option.value) === toId(value) ? 'bg-blue-50 font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-700 dark:text-slate-200'}`}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   onChange(toId(option.value));
@@ -81,7 +81,7 @@ const SearchableSelect = ({ id, label, value, options, placeholder, searchPlaceh
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-slate-500">{searchTerm ? searchPlaceholder : emptyMessage}</div>
+            <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">{searchTerm ? searchPlaceholder : emptyMessage}</div>
           )}
         </div>
       )}
@@ -93,7 +93,7 @@ const SearchableSelect = ({ id, label, value, options, placeholder, searchPlaceh
 const FeedbackPage = () => {
   const queryClient = useQueryClient();
   const user = authService.getUser();
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({ defaultValues: { is_anonymous: false } });
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({ defaultValues: { is_anonymous: true } });
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -242,29 +242,29 @@ const FeedbackPage = () => {
   return (
     <DashboardLayout>
       <div className="page-panel mx-auto grid max-w-7xl gap-6">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Submit Feedback</p>
-              <h1 className="mt-2 text-3xl font-bold text-slate-950">Enterprise feedback made simple</h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-600">Select the employee, rate key performance dimensions, and submit confidential feedback.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Submit Feedback</p>
+              <h1 className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">Enterprise feedback made simple</h1>
+              <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">Select the employee, rate key performance dimensions, and submit confidential feedback.</p>
             </div>
-            <div className="rounded-3xl bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm">
-              <p className="font-semibold text-slate-900">Ready to submit</p>
+            <div className="rounded-3xl bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:bg-slate-800 dark:text-slate-200">
+              <p className="font-semibold text-slate-900 dark:text-white">Ready to submit</p>
               <p className="mt-1">Modern, secure, and compliant feedback.</p>
             </div>
           </div>
         </div>
 
-        {message && <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 shadow-sm">{message}</div>}
-        {errorMessage && <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-900 shadow-sm">{errorMessage}</div>}
+        {message && <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 shadow-sm dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">{message}</div>}
+        {errorMessage && <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-900 shadow-sm dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">{errorMessage}</div>}
 
         <form className="grid gap-6 lg:grid-cols-[1.1fr_1.9fr]" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-6 rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+          <div className="space-y-6 rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Step 1</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-950">Employee Selection</h2>
-              <p className="mt-2 text-sm text-slate-600">Choose the employee you want to provide feedback for.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Step 1</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">Employee Selection</h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Choose the employee you want to provide feedback for.</p>
             </div>
 
             <input type="hidden" {...register('company_id', { required: 'Company is required' })} />
@@ -307,20 +307,20 @@ const FeedbackPage = () => {
               />
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-800">
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-xl font-bold text-white">
                   {selectedEmployee ? selectedEmployee.name.split(' ').map((part) => part[0]).slice(0, 2).join('') : '👤'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900">Selected employee</p>
-                  <p className="mt-1 text-base font-semibold text-slate-950">{selectedEmployee ? selectedEmployee.name : 'No employee selected'}</p>
-                  <p className="mt-1 text-sm text-slate-500">{selectedEmployee ? `${selectedEmployee.department_name} • ${selectedEmployee.company_name}` : 'Use search to choose a recipient'}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Selected employee</p>
+                  <p className="mt-1 text-base font-semibold text-slate-950 dark:text-white">{selectedEmployee ? selectedEmployee.name : 'No employee selected'}</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedEmployee ? `${selectedEmployee.department_name} • ${selectedEmployee.company_name}` : 'Use search to choose a recipient'}</p>
                 </div>
                 {selectedEmployee && (
                   <button
                     type="button"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
                     onClick={() => handleEmployeeChange('')}
                     aria-label="Remove selected employee"
                   >
@@ -330,8 +330,8 @@ const FeedbackPage = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-cyan-200 bg-cyan-50 p-5 text-sm text-slate-700 shadow-sm">
-              <p className="font-semibold text-slate-900">Note</p>
+            <div className="rounded-3xl border border-cyan-200 bg-cyan-50 p-5 text-sm text-slate-700 shadow-sm dark:border-cyan-800 dark:bg-cyan-900/30 dark:text-slate-200">
+              <p className="font-semibold text-slate-900 dark:text-white">Note</p>
               <ul className="mt-3 space-y-2 list-disc pl-5">
                 <li>Your feedback is confidential.</li>
                 <li>Provide honest and constructive feedback.</li>
@@ -341,15 +341,15 @@ const FeedbackPage = () => {
             </div>
           </div>
 
-          <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Step 2</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-950">Give Feedback</h2>
-              <p className="mt-2 text-sm text-slate-600">Rate the employee across five dimensions and provide comments.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Step 2</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">Give Feedback</h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Rate the employee across five dimensions and provide comments.</p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Rating Guide</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-800">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Rating Guide</p>
               <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                 {[
                   { value: 1, label: 'Below Average', bgColor: 'bg-red-50', textColor: 'text-red-700', borderColor: 'border-red-200' },
@@ -370,10 +370,10 @@ const FeedbackPage = () => {
               {['communication', 'teamwork', 'respect', 'responsibility', 'leadership'].map((field) => {
                 const value = watch(field);
                 return (
-                  <div key={field} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                  <div key={field} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-800">
                     <div className="mb-4 flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-800 capitalize">{field}</span>
-                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Rate</span>
+                      <span className="text-sm font-semibold text-slate-800 capitalize dark:text-white">{field}</span>
+                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Rate</span>
                     </div>
                     <div className="grid grid-cols-5 gap-2">
                       {[1, 2, 3, 4, 5].map((score) => {
@@ -390,7 +390,7 @@ const FeedbackPage = () => {
                           <button
                             key={score}
                             type="button"
-                            className={`rounded-xl border min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-bold transition-all duration-250 ${selected ? `${color.selected} shadow-lg scale-105` : `border-slate-300 bg-white text-slate-700 hover:${color.hover} hover:shadow-md hover:-translate-y-0.5`}`}
+                            className={`rounded-xl border min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-bold transition-all duration-250 ${selected ? `${color.selected} shadow-lg scale-105` : `border-slate-300 bg-white text-slate-700 hover:${color.hover} hover:shadow-md hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200`}`}
                             onClick={() => setFormValue(field, score)}
                           >
                             {score}
@@ -406,7 +406,7 @@ const FeedbackPage = () => {
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="comment" className="block text-sm font-semibold text-slate-700">Comment</label>
+                <label htmlFor="comment" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Comment</label>
                 <textarea
                   id="comment"
                   maxLength={500}
@@ -415,18 +415,18 @@ const FeedbackPage = () => {
                   placeholder="Share constructive feedback about the employee..."
                   {...register('comment')}
                 />
-                <div className="mt-2 flex justify-between text-sm text-slate-500">
+                <div className="mt-2 flex justify-between text-sm text-slate-500 dark:text-slate-400">
                   <span className="italic">Optional</span>
                   <span>{commentText.length}/500</span>
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <label className="flex items-center gap-3 text-slate-700">
-                  <input type="checkbox" {...register('is_anonymous')} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800">
+                <label className="flex items-center gap-3 text-slate-700 dark:text-slate-200">
+                  <input type="checkbox" {...register('is_anonymous')} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900" />
                   <span className="text-sm font-semibold">Submit anonymously</span>
                 </label>
-                <p className="mt-2 text-sm text-slate-500">Your identity will not be shown to the employee.</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Your identity will not be shown to the employee.</p>
               </div>
 
               <button type="submit" className="btn-primary w-full justify-center text-base" disabled={submitMutation.isPending}>

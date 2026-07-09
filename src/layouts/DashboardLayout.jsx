@@ -6,6 +6,9 @@ const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const user = authService.getUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => 
+    localStorage.getItem('sidebarCollapsed') === 'true'
+  );
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
@@ -13,6 +16,10 @@ const DashboardLayout = ({ children }) => {
     window.addEventListener('themechange', onThemeChange);
     return () => window.removeEventListener('themechange', onThemeChange);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+  }, [sidebarCollapsed]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -74,45 +81,72 @@ const DashboardLayout = ({ children }) => {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[86vw] -translate-x-full flex-col bg-slate-950 px-4 py-5 text-white shadow-2xl transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : ''}`}
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-slate-900 px-4 py-5 text-white shadow-2xl transition-all duration-300 ${
+          sidebarOpen 
+            ? 'w-72 max-w-[86vw] translate-x-0' 
+            : 'w-0 max-w-0 translate-x-full'
+        } lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+          sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'
+        }`}
         aria-label="Sidebar"
       >
 
         <div className="mb-6 flex items-center justify-between gap-3 px-2">
-          <button type="button" onClick={() => navigate('/dashboard')} className="min-h-0 p-0 text-left hover:opacity-90">
-            <span className="block text-xl font-bold tracking-tight">Feedback-Rating App</span>
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-400">Feedback-Rating App</span>
-          </button>
-          <button type="button" className="icon-button border-white/10 text-white lg:hidden" onClick={closeSidebar} aria-label="Close menu">
-            ×
-          </button>
+          {!sidebarCollapsed && (
+            <button type="button" onClick={() => navigate('/dashboard')} className="min-h-0 p-0 text-left hover:opacity-90">
+              <span className="block text-xl font-bold tracking-tight">Feedback-Rating App</span>
+              <span className="text-xs uppercase tracking-[0.18em] text-slate-400">Feedback-Rating App</span>
+            </button>
+          )}
+          <div className="flex items-center gap-2">
+            <button 
+              type="button" 
+              className="hidden lg:inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-slate-800 text-white shadow-lg transition-all duration-250 hover:bg-slate-700 hover:shadow-xl hover:-translate-y-0.5"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)} 
+              aria-label="Toggle sidebar"
+            >
+              ☰
+            </button>
+            <button type="button" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-slate-800 text-white shadow-lg transition-all duration-250 hover:bg-slate-700 hover:shadow-xl hover:-translate-y-0.5 lg:hidden" onClick={closeSidebar} aria-label="Close menu">
+              ×
+            </button>
+          </div>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto pr-1" aria-label="Primary navigation">
+        <nav className="flex-1 space-y-2 overflow-y-auto pr-1" aria-label="Primary navigation">
           {navigation.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               onClick={closeSidebar}
-              className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}
+              className={({ isActive }) => `sidebar-item ${isActive ? 'sidebar-item-active' : ''} ${sidebarCollapsed ? 'justify-center' : ''}`}
             >
-              <span className="nav-icon" aria-hidden="true">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="sidebar-icon" aria-hidden="true">{item.icon}</span>
+              {!sidebarCollapsed && <span>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
 
-        <div className="mt-5 rounded-lg border border-white/10 bg-white/5 p-3">
-          <p className="truncate text-sm font-semibold text-white">{user?.name || 'User'}</p>
-          <p className="truncate text-xs uppercase tracking-wide text-slate-400">{user?.role?.replace('_', ' ')}</p>
-          <button type="button" onClick={handleLogout} className="mt-3 w-full btn-danger">Logout</button>
+        <div className="mt-5 rounded-2xl border border-white/10 bg-slate-800/50 p-4">
+          {!sidebarCollapsed && (
+            <>
+              <p className="truncate text-sm font-semibold text-white">{user?.name || 'User'}</p>
+              <p className="truncate text-xs uppercase tracking-wide text-slate-400 mt-1">{user?.role?.replace('_', ' ')}</p>
+              <button type="button" onClick={handleLogout} className="mt-4 w-full sidebar-logout-btn">Logout</button>
+            </>
+          )}
+          {sidebarCollapsed && (
+            <button type="button" onClick={handleLogout} className="sidebar-icon mx-auto" title="Logout">
+              🚪
+            </button>
+          )}
         </div>
       </aside>
 
       <div className="min-w-0 flex-1 pb-20 lg:pb-0">
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
           <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-            <button type="button" onClick={() => setSidebarOpen(true)} className="icon-button lg:hidden" aria-label="Open menu">
+            <button type="button" onClick={() => setSidebarOpen(true)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-lg transition-all duration-250 hover:bg-slate-50 hover:shadow-xl hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 lg:hidden" aria-label="Open menu">
               ☰
             </button>
             <div className="min-w-0">
