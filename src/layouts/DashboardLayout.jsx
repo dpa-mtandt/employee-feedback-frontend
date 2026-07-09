@@ -33,7 +33,6 @@ const DashboardLayout = ({ children }) => {
     const items = [
       { label: 'Dashboard', to: '/dashboard', icon: '▦' },
       { label: 'Feedback', to: '/feedback', icon: '✎' },
-
     ];
 
     if (['super_admin', 'company_admin'].includes(user?.role)) {
@@ -82,15 +81,12 @@ const DashboardLayout = ({ children }) => {
 
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-slate-900 px-4 py-5 text-white shadow-2xl transition-all duration-300 ${
-          sidebarOpen 
-            ? 'w-72 max-w-[86vw] translate-x-0' 
-            : 'w-0 max-w-0 translate-x-full'
-        } lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } w-72 max-w-[86vw] lg:sticky lg:top-0 lg:h-screen lg:max-w-none lg:translate-x-0 ${
           sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'
         }`}
         aria-label="Sidebar"
       >
-
         <div className="mb-6 flex items-center justify-between gap-3 px-2">
           {!sidebarCollapsed && (
             <button type="button" onClick={() => navigate('/dashboard')} className="min-h-0 p-0 text-left hover:opacity-90">
