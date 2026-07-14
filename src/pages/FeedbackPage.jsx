@@ -180,7 +180,16 @@ const FeedbackPage = () => {
     setValue(field, value, { shouldDirty: true, shouldValidate: true });
   };
 
+  // --- NEW: Helper function to clear all selections at once ---
+  const clearAllSelections = () => {
+    setFormValue('company_id', '');
+    setFormValue('department_id', '');
+    setFormValue('given_to', '');
+  };
+
   const handleCompanyChange = (companyId) => {
+    if (!companyId) return clearAllSelections(); // Triggers if user clicks "Clear"
+
     const currentDepartment = departments.find((department) => toId(department.id) === toId(selectedDepartmentId));
     const currentEmployee = activeEmployees.find((employee) => toId(employee.id) === toId(selectedEmployeeId));
     const nextDepartmentId = companyId && currentDepartment?.company_id && toId(currentDepartment.company_id) === toId(companyId)
@@ -196,6 +205,8 @@ const FeedbackPage = () => {
   };
 
   const handleDepartmentChange = (departmentId) => {
+    if (!departmentId) return clearAllSelections(); // Triggers if user clicks "Clear"
+
     const department = departments.find((item) => toId(item.id) === toId(departmentId));
     const currentEmployee = activeEmployees.find((employee) => toId(employee.id) === toId(selectedEmployeeId));
     const companyId = department ? toId(department.company_id) : toId(selectedCompanyId);
@@ -211,8 +222,9 @@ const FeedbackPage = () => {
   };
 
   const handleEmployeeChange = (employeeId) => {
-    const employee = activeEmployees.find((item) => toId(item.id) === toId(employeeId));
+    if (!employeeId) return clearAllSelections(); // Triggers if user clicks "Clear" or "x"
 
+    const employee = activeEmployees.find((item) => toId(item.id) === toId(employeeId));
     setFormValue('given_to', employeeId);
     if (employee) {
       setFormValue('company_id', toId(employee.company_id));
@@ -287,7 +299,7 @@ const FeedbackPage = () => {
           </div>
         </div>
 
-        {errorMessage && <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-900 shadow-sm dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">{errorMessage}</div>}
+        {/* Note: The old errorMessage display was removed from here and moved down below */}
 
         <form className="grid gap-6 lg:grid-cols-[1.1fr_1.9fr]" onSubmit={handleSubmit(onSubmit)}>
           
@@ -461,7 +473,16 @@ const FeedbackPage = () => {
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Your identity will not be shown to the employee.</p>
               </div>
 
-              {/* --- ENHANCED MOBILE ERROR NOTIFICATION --- */}
+              {/* --- MOVED API ERROR NOTIFICATION (Like "Feedback already given...") --- */}
+              {errorMessage && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400">
+                  <p className="font-bold flex items-center gap-2">
+                    ⚠️ {errorMessage}
+                  </p>
+                </div>
+              )}
+
+              {/* --- ENHANCED MOBILE ERROR NOTIFICATION FOR MISSING FIELDS --- */}
               {Object.keys(errors).length > 0 && (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400">
                   <p className="font-bold flex items-center gap-2 mb-2">
