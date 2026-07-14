@@ -22,12 +22,12 @@ export const reportService = {
   },
 
   deleteFeedback: async (feedbackId) => {
-    const response = await apiClient.delete(`/feedbacks/${feedbackId}`);
+    const response = await apiClient.delete(`/feedback/${feedbackId}`);
     return response.data;
   },
 
   updateFeedback: async (feedbackId, data) => {
-    const response = await apiClient.put(`/feedbacks/${feedbackId}`, data);
+    const response = await apiClient.put(`/feedback/${feedbackId}`, data);
     return response.data;
   }
 };
