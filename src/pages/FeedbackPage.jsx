@@ -85,7 +85,7 @@ const SearchableSelect = ({ id, label, value, options, placeholder, searchPlaceh
           )}
         </div>
       )}
-      {error && <span className="text-red-500 text-sm">{error.message}</span>}
+      {error && <span className="text-red-500 text-sm mt-1 block">{error.message}</span>}
     </div>
   );
 };
@@ -93,9 +93,14 @@ const SearchableSelect = ({ id, label, value, options, placeholder, searchPlaceh
 const FeedbackPage = () => {
   const queryClient = useQueryClient();
   const user = authService.getUser();
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({ defaultValues: { is_anonymous: true } });
-  const [message, setMessage] = useState('');
+  
+  // Added `reset` from useForm to easily clear the form later
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({ defaultValues: { is_anonymous: true } });
+  
   const [errorMessage, setErrorMessage] = useState('');
+  
+  // NEW STATE: Tracks if the form was successfully submitted
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const selectedCompanyId = watch('company_id');
   const selectedDepartmentId = watch('department_id');
@@ -120,9 +125,11 @@ const FeedbackPage = () => {
 
   const submitMutation = useMutation({
     mutationFn: (data) => feedbackService.createFeedback(data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feedback'] });
-      setMessage(response.message || 'Feedback submitted successfully');
+      // Trigger the success screen to show
+      setIsSubmitted(true);
+      setErrorMessage('');
     }
   });
 
@@ -218,7 +225,6 @@ const FeedbackPage = () => {
   };
 
   const onSubmit = async (data) => {
-    setMessage('');
     setErrorMessage('');
     try {
       const recipient = activeEmployees.find((employee) => toId(employee.id) === toId(data.given_to));
@@ -239,6 +245,38 @@ const FeedbackPage = () => {
     }
   };
 
+  // NEW: Handle resetting the form after a successful submission
+  const handleResetForm = () => {
+    reset(); // Clears all react-hook-form values
+    setIsSubmitted(false); // Returns user to the form view
+  };
+
+  // NEW: If submitted successfully, show the Thank You page instead of the form
+  if (isSubmitted) {
+    return (
+      <DashboardLayout>
+        <div className="page-panel mx-auto flex max-w-3xl flex-col items-center justify-center pt-16 text-center">
+          <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-sm dark:bg-emerald-900/40 dark:text-emerald-400">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">Thank You for Your Feedback!</h1>
+          <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
+            Your feedback has been submitted successfully. We appreciate your time in helping us foster a better, more constructive work environment.
+          </p>
+          <button
+            onClick={handleResetForm}
+            className="btn-primary mt-8 px-8 py-3 text-base font-semibold shadow-md"
+          >
+            Submit Another Feedback
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // --- STANDARD FORM RENDER BELOW ---
   return (
     <DashboardLayout>
       <div className="page-panel mx-auto grid max-w-7xl gap-6">
@@ -256,10 +294,11 @@ const FeedbackPage = () => {
           </div>
         </div>
 
-        {message && <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 shadow-sm dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">{message}</div>}
         {errorMessage && <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-900 shadow-sm dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">{errorMessage}</div>}
 
         <form className="grid gap-6 lg:grid-cols-[1.1fr_1.9fr]" onSubmit={handleSubmit(onSubmit)}>
+          
+          {/* STEP 1 COLUMN */}
           <div className="space-y-6 rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Step 1</p>
@@ -341,6 +380,7 @@ const FeedbackPage = () => {
             </div>
           </div>
 
+          {/* STEP 2 COLUMN */}
           <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Step 2</p>
@@ -369,8 +409,12 @@ const FeedbackPage = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               {['communication', 'teamwork', 'respect', 'responsibility', 'leadership'].map((field) => {
                 const value = watch(field);
+                
+                // Keep react-hook-form happy by registering the fields manually
+                // Since they are handled via custom buttons, we use a hidden input for validation
                 return (
                   <div key={field} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-800">
+                    <input type="hidden" {...register(field, { required: true })} />
                     <div className="mb-4 flex items-center justify-between">
                       <span className="text-sm font-semibold text-slate-800 capitalize dark:text-white">{field}</span>
                       <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Rate</span>
@@ -398,6 +442,7 @@ const FeedbackPage = () => {
                         );
                       })}
                     </div>
+                    {/* Error message for missing field */}
                     {errors[field] && <p className="mt-3 text-sm text-red-500 font-medium">This rating is required.</p>}
                   </div>
                 );
@@ -429,7 +474,14 @@ const FeedbackPage = () => {
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Your identity will not be shown to the employee.</p>
               </div>
 
-              <button type="submit" className="btn-primary w-full justify-center text-base" disabled={submitMutation.isPending}>
+              {/* NEW: Notification that shows above the submit button if fields are missing */}
+              {Object.keys(errors).length > 0 && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-600 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400">
+                  ⚠️ Please complete all required fields and ratings above before submitting.
+                </div>
+              )}
+
+              <button type="submit" className="btn-primary w-full justify-center text-base py-3" disabled={submitMutation.isPending}>
                 <span>✈️</span>
                 Submit Feedback
               </button>
