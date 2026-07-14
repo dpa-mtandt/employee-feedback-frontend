@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { reportService } from '../services/reportService';
@@ -13,6 +13,82 @@ const ratingCategoryData = (rows) => ['communication', 'teamwork', 'respect', 'r
   return { name: formatLabel(key), average: Number(average.toFixed(2)) };
 });
 
+const EditFeedbackModal = ({ feedback, isOpen, onClose, onSave }) => {
+  const [formData, setFormData] = useState(feedback || {});
+
+  useEffect(() => {
+    setFormData(feedback || {});
+  }, [feedback]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Edit Feedback</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {['communication', 'teamwork', 'respect', 'responsibility', 'leadership'].map(field => (
+            <div key={field}>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {formatLabel(field)}
+              </label>
+              <input
+                type="number"
+                name={field}
+                value={formData[field] || ''}
+                onChange={handleChange}
+                min="1"
+                max="5"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+              />
+            </div>
+          ))}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Comments
+            </label>
+            <textarea
+              name="comment"
+              value={formData.comment || ''}
+              onChange={handleChange}
+              rows="4"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+            />
+          </div>
+          <div className="flex gap-3 justify-end pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const ReportsPage = () => {
   const [reportType, setReportType] = useState('employee');
   const [companyId, setCompanyId] = useState('');
@@ -20,8 +96,11 @@ const ReportsPage = () => {
   const [employeeId, setEmployeeId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [editingFeedback, setEditingFeedback] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const user = authService.getUser();
   const isSuperAdmin = user?.role === 'super_admin';
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isSuperAdmin && user?.company_id) {
@@ -33,6 +112,30 @@ const ReportsPage = () => {
   const employeeFeedbackQuery = useQuery({ queryKey: ['report-employee-feedback', companyId, departmentId, employeeId, startDate, endDate], queryFn: () => reportService.getEmployeeFeedbackReport({ company_id: companyId, department_id: departmentId, employee_id: employeeId, start_date: startDate, end_date: endDate }), enabled: reportType === 'employee' });
   const companyQuery = useQuery({ queryKey: ['report-company'], queryFn: reportService.getCompanyReport, enabled: reportType === 'company' });
   const departmentQuery = useQuery({ queryKey: ['report-department'], queryFn: reportService.getDepartmentReport, enabled: reportType === 'department' });
+
+  const deleteMutation = useMutation({
+    mutationFn: reportService.deleteFeedback,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-employee-feedback'] });
+      alert('Feedback deleted successfully');
+    },
+    onError: (error) => {
+      alert('Error deleting feedback: ' + (error.response?.data?.message || error.message));
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => reportService.updateFeedback(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-employee-feedback'] });
+      setIsEditModalOpen(false);
+      setEditingFeedback(null);
+      alert('Feedback updated successfully');
+    },
+    onError: (error) => {
+      alert('Error updating feedback: ' + (error.response?.data?.message || error.message));
+    }
+  });
 
   const data = reportType === 'employee' ? employeeFeedbackQuery.data || [] : reportType === 'company' ? companyQuery.data || [] : departmentQuery.data || [];
 
@@ -110,6 +213,24 @@ const ReportsPage = () => {
     link.download = `${reportType}-report.xlsx`;
     link.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleEditClick = (feedback) => {
+    setEditingFeedback(feedback);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (feedbackId) => {
+    if (window.confirm('Are you sure you want to delete this feedback? This action cannot be undone.')) {
+      deleteMutation.mutate(feedbackId);
+    }
+  };
+
+  const handleSaveEdit = (formData) => {
+    updateMutation.mutate({
+      id: editingFeedback.id,
+      data: formData
+    });
   };
 
   return (
@@ -241,14 +362,52 @@ const ReportsPage = () => {
             <thead>
               <tr className="bg-gray-100 border-b">
                 {data?.[0] ? Object.keys(data[0]).map((key) => <th key={key} className="px-4 py-2 text-left">{key}</th>) : <th className="px-4 py-2 text-left">No data</th>}
+                {isSuperAdmin && reportType === 'employee' && <th className="px-4 py-2 text-left">Actions</th>}
               </tr>
             </thead>
             <tbody>
-              {data?.length ? data.map((row, index) => <tr key={index} className="border-b">{Object.entries(row).map(([key, value]) => <td key={key} data-label={key} className="px-4 py-2">{String(value ?? '')}</td>)}</tr>) : <tr><td data-label="Status" className="px-4 py-6 text-center text-gray-500" colSpan={12}>No records found</td></tr>}
+              {data?.length ? data.map((row, index) => (
+                <tr key={index} className="border-b">
+                  {Object.entries(row).map(([key, value]) => (
+                    <td key={key} data-label={key} className="px-4 py-2">{String(value)}</td>
+                  ))}
+                  {isSuperAdmin && reportType === 'employee' && (
+                    <td className="px-4 py-2 flex gap-2">
+                      <button
+                        onClick={() => handleEditClick(row)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(row.id)}
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                        disabled={deleteMutation.isPending}
+                      >
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              )) : (
+                <tr>
+                  <td className="px-4 py-2 text-center text-gray-500">No data available</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      <EditFeedbackModal
+        feedback={editingFeedback}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingFeedback(null);
+        }}
+        onSave={handleSaveEdit}
+      />
     </DashboardLayout>
   );
 };
