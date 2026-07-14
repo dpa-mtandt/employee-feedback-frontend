@@ -33,6 +33,13 @@ const LoginPage = ({ theme, setTheme }) => {
         {theme === 'dark' ? 'Light' : 'Dark'}
       </button>
       <div className="bg-white rounded-lg shadow-2xl p-5 sm:p-8 w-full max-w-md">
+        
+        {/* --- ADDED LOGO --- */}
+        <div className="flex justify-center mb-6">
+          {/* Ensure Common Logo.jpeg is accessible at this path */}
+          <img src="/path/to/Common Logo.jpeg" alt="MT&T Logo" className="h-20" />
+        </div>
+
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-800">Welcome Back</h1>
         <p className="text-center text-gray-600 mb-6">Feedback-Rating App</p>
 
@@ -80,7 +87,9 @@ const LoginPage = ({ theme, setTheme }) => {
           </Link>
         </div>
 
-        <p className="text-center text-gray-600 text-sm mt-4">
+        {/* --- UPDATED ATTRIBUTION LINE --- */}
+        <p className="text-center text-gray-600 text-sm mt-6 pt-4 border-t border-gray-100">
+          Built and Managed by IT Team
         </p>
       </div>
     </div>
