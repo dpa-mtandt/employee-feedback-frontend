@@ -94,12 +94,9 @@ const FeedbackPage = () => {
   const queryClient = useQueryClient();
   const user = authService.getUser();
   
-  // Added `reset` from useForm to easily clear the form later
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({ defaultValues: { is_anonymous: true } });
   
   const [errorMessage, setErrorMessage] = useState('');
-  
-  // NEW STATE: Tracks if the form was successfully submitted
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const selectedCompanyId = watch('company_id');
@@ -127,7 +124,6 @@ const FeedbackPage = () => {
     mutationFn: (data) => feedbackService.createFeedback(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feedback'] });
-      // Trigger the success screen to show
       setIsSubmitted(true);
       setErrorMessage('');
     }
@@ -245,13 +241,11 @@ const FeedbackPage = () => {
     }
   };
 
-  // NEW: Handle resetting the form after a successful submission
   const handleResetForm = () => {
-    reset(); // Clears all react-hook-form values
-    setIsSubmitted(false); // Returns user to the form view
+    reset();
+    setIsSubmitted(false);
   };
 
-  // NEW: If submitted successfully, show the Thank You page instead of the form
   if (isSubmitted) {
     return (
       <DashboardLayout>
@@ -276,7 +270,6 @@ const FeedbackPage = () => {
     );
   }
 
-  // --- STANDARD FORM RENDER BELOW ---
   return (
     <DashboardLayout>
       <div className="page-panel mx-auto grid max-w-7xl gap-6">
@@ -298,7 +291,6 @@ const FeedbackPage = () => {
 
         <form className="grid gap-6 lg:grid-cols-[1.1fr_1.9fr]" onSubmit={handleSubmit(onSubmit)}>
           
-          {/* STEP 1 COLUMN */}
           <div className="space-y-6 rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Step 1</p>
@@ -380,7 +372,6 @@ const FeedbackPage = () => {
             </div>
           </div>
 
-          {/* STEP 2 COLUMN */}
           <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Step 2</p>
@@ -409,9 +400,6 @@ const FeedbackPage = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               {['communication', 'teamwork', 'respect', 'responsibility', 'leadership'].map((field) => {
                 const value = watch(field);
-                
-                // Keep react-hook-form happy by registering the fields manually
-                // Since they are handled via custom buttons, we use a hidden input for validation
                 return (
                   <div key={field} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-800">
                     <input type="hidden" {...register(field, { required: true })} />
@@ -442,7 +430,6 @@ const FeedbackPage = () => {
                         );
                       })}
                     </div>
-                    {/* Error message for missing field */}
                     {errors[field] && <p className="mt-3 text-sm text-red-500 font-medium">This rating is required.</p>}
                   </div>
                 );
@@ -474,10 +461,20 @@ const FeedbackPage = () => {
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Your identity will not be shown to the employee.</p>
               </div>
 
-              {/* NEW: Notification that shows above the submit button if fields are missing */}
+              {/* --- ENHANCED MOBILE ERROR NOTIFICATION --- */}
               {Object.keys(errors).length > 0 && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-600 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400">
-                  ⚠️ Please complete all required fields and ratings above before submitting.
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400">
+                  <p className="font-bold flex items-center gap-2 mb-2">
+                    ⚠️ Cannot submit yet. Missing fields:
+                  </p>
+                  <ul className="list-disc pl-6 space-y-1 font-medium">
+                    {errors.given_to && <li>Employee Selection</li>}
+                    {errors.department_id && <li>Department</li>}
+                    {errors.company_id && <li>Company</li>}
+                    {(errors.communication || errors.teamwork || errors.respect || errors.responsibility || errors.leadership) && (
+                      <li>All Performance Ratings (1-5)</li>
+                    )}
+                  </ul>
                 </div>
               )}
 
