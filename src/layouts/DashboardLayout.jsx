@@ -91,7 +91,7 @@ const DashboardLayout = ({ children }) => {
           {!sidebarCollapsed && (
             <button type="button" onClick={() => navigate('/dashboard')} className="min-h-0 p-0 text-left hover:opacity-90">
               <span className="block text-xl font-bold tracking-tight">Feedback-Rating App</span>
-              <span className="text-xs uppercase tracking-[0.18em] text-slate-400">Feedback-Rating App</span>
+              <span className="text-xs uppercase tracking-[0.18em] text-slate-400">Mtandt Group</span>
             </button>
           )}
           <div className="flex items-center gap-2">
