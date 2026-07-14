@@ -19,5 +19,15 @@ export const reportService = {
   downloadReport: async (endpoint, params = {}) => {
     const response = await apiClient.get(endpoint, { params: { ...params, format: 'excel' }, responseType: 'blob' });
     return response.data;
+  },
+
+  deleteFeedback: async (feedbackId) => {
+    const response = await apiClient.delete(`/feedbacks/${feedbackId}`);
+    return response.data;
+  },
+
+  updateFeedback: async (feedbackId, data) => {
+    const response = await apiClient.put(`/feedbacks/${feedbackId}`, data);
+    return response.data;
   }
 };
