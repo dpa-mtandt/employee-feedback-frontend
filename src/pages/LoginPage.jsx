@@ -86,7 +86,7 @@ const LoginPage = ({ theme, setTheme }) => {
 
         <div className="text-center mt-4">
           <Link to="/forgot-password" className="text-blue-600 hover:underline text-sm">
-            Forgot password?
+            Reset password?
           </Link>
         </div>
 
