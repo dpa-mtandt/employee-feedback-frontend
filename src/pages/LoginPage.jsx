@@ -37,7 +37,7 @@ const LoginPage = ({ theme, setTheme }) => {
         {/* --- ADDED LOGO --- */}
         <div className="flex justify-center mb-6">
           {/* Ensure Common Logo.jpeg is accessible at this path */}
-          <img src="/path/to/Common Logo.jpeg" alt="MT&T Logo" className="h-20" />
+          <img src="src/Common Logo.jpeg" alt="MT&T Logo" className="h-20" />
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-800">Welcome Back</h1>
